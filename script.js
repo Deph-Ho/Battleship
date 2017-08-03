@@ -1,6 +1,47 @@
 //Run once DOM is ready for JavaScript to execute
-$(document).ready(function() {
-  startGame();
+$(window).on("load", function() {
+  generateGrid(COMPGridID, '.comp-battleship-grid');
+  generateGrid(PLAYERGridID, '.user-battleship-grid');
+  labelGrid(COMPGridID);
+  labelGrid(PLAYERGridID);
+
+  //Counter to make sure player places down 5 ships
+  var spaceCounter = 0;
+  document.setUpState = 'inactive';
+  document.gameState = 'inactive';
+  document.turn = 'player';
+  //When game is in set up mode, player can access his/her own board
+  //Else it is locked and player can only access computer's board
+  //Find square id on click
+  $('.user-battleship-grid').find('td').click(function() {
+    if(document.setUpState === 'active') {
+      var user_id = $(this).attr('id');
+      spaceCounter = userSetBoard(user_id, spaceCounter);
+    }
+  })
+
+  //Counter to see if game has ended
+  var playerScoreCounter = 0;
+  var compScoreCounter = 0;
+
+  //Player and comp taking turns
+  $('.comp-battleship-grid').find('td').click(function() {
+    if(document.gameState === 'active' && document.turn === 'player'){
+      var comp_id = $(this).attr('id');
+      playerScoreCounter = playersMove(comp_id, playerScoreCounter);
+      $('.comp-battleship-grid').removeClass('bordered');
+      $('.user-battleship-grid').addClass('bordered');
+
+      //If player won game, do not execute computer's move
+      if(playerScoreCounter < MAXSCORE) {
+        setTimeout(function() {
+          compScoreCounter = compsMove(compScoreCounter);
+          $('.comp-battleship-grid').addClass('bordered');
+          $('.user-battleship-grid').removeClass('bordered');
+        }, 1000);
+      }
+    }
+  })
 });
 
 const NUMROWS = 10;
@@ -13,28 +54,71 @@ const EAST = 2;
 const SOUTH = 3;
 const WEST = 4;
 
-//Start game
-function startGame() {
-  //Set-Up
-  generateGrid();
-  labelGrid();
+const COMPGridID = 'COMP-';
+const PLAYERGridID = 'PLAYER-';
+const MAXSCORE = 17;
+
+//Button starts game and computer sets up ships on its own
+function startGame()  {
+  document.gameState = 'active';
+  document.setUpState = 'active';
+  setMessage("Player place your ships. Set carrier (5 spaces), " +
+  "two battleships (4 spaces), cruiser (3 spaces), and a destroyer (2 spaces)");
   compSetBoard();
+  $('#startBtn').attr("disabled","disabled");
+}
+
+//Reset board
+function clearBoard() {
+  window.location.reload();
 }
 
 //Player's turn
-function nextMove(square) {
-  /*https://stackoverflow.com/questions/41255984/how-to-get-an-id-of-the-clicked-element*/
+function playersMove(id, scoreCounter) {
+  //If player hits a ship
   if(document.getElementById(id).getAttribute('data') === OCCUPIED){
-    setMessage("Hit!");
+    setMessage('You hit a ship!');
+    document.getElementById(id).innerHTML = 'O';
+    ++scoreCounter;
+    if(scoreCounter === MAXSCORE) {
+      document.gameState = 'inactive';
+      setMessage("Game over! Player wins! Press reset to replay.")
+    }
   }
   else{
-    setMessage("Miss");
+    setMessage('You missed');
+    document.getElementById(id).innerHTML = '*';
   }
+  //Computer's turn after player
+  document.turn = 'computer';
+  return scoreCounter;
 }
 
+//Computer's turn
+function compsMove(scoreCounter) {
+  //Generate a random location on the player's board
+  var id = getRandomLocation(PLAYERGridID);
+  //If computer hits a ship
+  if(document.getElementById(id).getAttribute('data') === OCCUPIED){
+    setMessage('Computer has hit a ship!');
+    document.getElementById(id).innerHTML = 'O';
+    ++scoreCounter;
+    if(scoreCounter === MAXSCORE) {
+      document.gameState = 'inactive';
+      setMessage("Game over! Computer wins! Press reset game to replay.")
+    }
+  }
+  else{
+    setMessage('Computer missed');
+    document.getElementById(id).innerHTML = '*';
+  }
+  //Player's turn after computer
+  document.turn = 'player';
+  return scoreCounter;
+}
 
 //Generate the battleship board grid
-function generateGrid() {
+function generateGrid(classIDPrefix, gridClass) {
   var markup = '';
   var column = 'A';
   var row = '1';
@@ -45,14 +129,14 @@ function generateGrid() {
       if(j === 0){
         if(row === ':'){
           row = NUMROWS.toString();
-          markup += '<td id="' + row + '"class="square"></td>';
+          markup += '<td id="' + classIDPrefix + row + '"class="square"></td>';
         }
         else{
-          markup += '<td id="' + j.toString() + row + '"class="square"></td>';
+          markup += '<td id="' + classIDPrefix + j.toString() + row + '"class="square"></td>';
         }
       }
       else{
-        markup += '<td id="' + column + row + '" class="square"></td>';
+        markup += '<td id="' + classIDPrefix + column + row + '" class="square"></td>';
         column = incrementChar(column);
       }
     }
@@ -60,22 +144,22 @@ function generateGrid() {
     column = 'A';
     row = incrementChar(row);
   }
-  $('.battleship-grid').append(markup);
+  $(gridClass).append(markup);
 }
 
 //Label the fixed portions of battleship grid
-function labelGrid() {
+function labelGrid(classIDPrefix) {
   var column = 'A';
   var row = '1';
   for(i=0; i<NUMROWS; i++){
-    insertText('0' + column, column);
+    insertText(classIDPrefix + '0' + column, column);
 
     if(i === 9){
       var rowLabel = NUMROWS.toString();
-      insertText(rowLabel, rowLabel);
+      insertText(classIDPrefix +rowLabel, rowLabel);
     }
     else{
-      insertText('0' + row, row);
+      insertText(classIDPrefix +'0' + row, row);
     }
     column = incrementChar(column);
     row = incrementChar(row);
@@ -84,9 +168,9 @@ function labelGrid() {
 
 //Place the ships according to ship type(size)
 function setShip(size) {
-  var pos = getRandomLocation();
-  var column = pos[0];
-  var row = pos[1];
+  var pos = getRandomLocation(COMPGridID);
+  var column = pos[5];
+  var row = pos[6];
   var dir = getRandomDirection(column, row);
 
   //Set ship based on orientation
@@ -109,7 +193,29 @@ function setShip(size) {
   return true;
 }
 
-//Computer set ships in random locations
+//Player sets ship
+function userSetBoard(id, spaceCounter) {
+  if(document.getElementById(id).getAttribute('data') === OCCUPIED) {
+    setMessage("Spot taken, please place somewhere else");
+    return spaceCounter;
+  }
+  else{
+    setMessage("Player place your ships. Set carrier (5 spaces), " +
+    "two battleships (4 spaces), cruiser (3 spaces), and a destroyer (2 spaces)");
+  }
+  document.getElementById(id).setAttribute('data', OCCUPIED);
+  document.getElementById(id).innerHTML = 'X';
+
+  if(spaceCounter >= MAXSCORE){
+    document.setUpState = 'inactive';
+    setMessage("Game is ready! Player's turn, click on a spot on the computer's board")
+    $('.comp-battleship-grid').addClass('bordered');
+    return spaceCounter;
+  }
+  return ++spaceCounter;
+}
+
+//Computer sets ships in random locations
 function compSetBoard() {
   placeCarrier();
   placeBattleShip();
@@ -145,10 +251,10 @@ function getRandomColumn() {
 }
 
 //Random location generator for computer ship placements
-function getRandomLocation() {
+function getRandomLocation(gridID) {
   var column = getRandomColumn();
   var row = getRandomRow(1,10);
-  var pos = column + row;
+  var pos = gridID + column + row;
   return pos;
 }
 
@@ -209,28 +315,28 @@ function getRandomDirection(column, row) {
 
 //Returns the adjacent north position from pos
 function decrementPosVertically(pos, column) {
-  return column + String.fromCharCode(pos.charCodeAt(1) - 1);
+  return COMPGridID + column + String.fromCharCode(pos.charCodeAt(6) - 1);
 }
 
 //Returns the adjacent west position from pos
 function decrementPosHorizontally(pos, row) {
-  return String.fromCharCode(pos.charCodeAt(0) - 1) + row;
+  return COMPGridID + String.fromCharCode(pos.charCodeAt(5) - 1) + row;
 }
 
 //Returns the adjacent south position from pos
 function incrementPosVertically(pos, row) {
-  return String.fromCharCode(pos.charCodeAt(0) + 1) + row;
+  return COMPGridID + String.fromCharCode(pos.charCodeAt(5) + 1) + row;
 }
 
 //Returns the adjacent east position from pos
 function incrementPosHorizontally(pos, column) {
-  return column + String.fromCharCode(pos.charCodeAt(1) + 1);
+  return COMPGridID + column + String.fromCharCode(pos.charCodeAt(6) + 1);
 }
 
 //Computer set ship in north orientation
 function setShipNorth(pos, size) {
-  var column = pos[0];
-  var row = pos[1];
+  var column = pos[5];
+  var row = pos[6];
 
   if(row<size){
     return false;
@@ -242,7 +348,7 @@ function setShipNorth(pos, size) {
     pos = decrementPosVertically(pos, column);
   }
   //Ship can be placed on map
-  pos = column + row;
+  pos = COMPGridID + column + row;
   for(j=0; j<size; j++){
     document.getElementById(pos).setAttribute('data', OCCUPIED);
     document.getElementById(pos).innerHTML = 'X';
@@ -253,8 +359,8 @@ function setShipNorth(pos, size) {
 
 //Computer set ship in east orientation
 function setShipEast(pos, size) {
-  var column = pos[0];
-  var row = pos[1];
+  var column = pos[5];
+  var row = pos[6];
 
   if(column>(String.fromCharCode(FIRSTCOL.charCodeAt(0) + (size - 1)))){
     return false;
@@ -266,7 +372,7 @@ function setShipEast(pos, size) {
     pos = incrementPosVertically(pos, row);
   }
   //Ship can be placed on map
-  pos = column + row;
+  pos = COMPGridID + column + row;
   for(j=0; j<size; j++){
     document.getElementById(pos).setAttribute('data', OCCUPIED);
     document.getElementById(pos).innerHTML = 'X';
@@ -277,8 +383,8 @@ function setShipEast(pos, size) {
 
 //Computer set ship in south orientation
 function setShipSouth(pos, size) {
-  var column = pos[0];
-  var row = pos[1];
+  var column = pos[5];
+  var row = pos[6];
 
   if(row>size){
     return false;
@@ -290,7 +396,7 @@ function setShipSouth(pos, size) {
     pos = incrementPosHorizontally(pos, column);
   }
   //Ship can be placed on map
-  pos = column + row;
+  pos = COMPGridID + column + row;
   for(j=0; j<size; j++){
     document.getElementById(pos).setAttribute('data', OCCUPIED);
     document.getElementById(pos).innerHTML = 'X';
@@ -301,8 +407,8 @@ function setShipSouth(pos, size) {
 
 //Computer set ship in west orientation
 function setShipWest(pos, size) {
-  var column = pos[0];
-  var row = pos[1];
+  var column = pos[5];
+  var row = pos[6];
 
   if(column<(String.fromCharCode(FIRSTCOL.charCodeAt(0) + (size - 1)))) {
     return false;
@@ -314,7 +420,7 @@ function setShipWest(pos, size) {
     pos = decrementPosHorizontally(pos, row);
   }
   //Ship can be placed on map
-  pos = column + row;
+  pos = COMPGridID + column + row;
   for(j=0; j<size; j++) {
     document.getElementById(pos).setAttribute('data', OCCUPIED);
     document.getElementById(pos).innerHTML = 'X';

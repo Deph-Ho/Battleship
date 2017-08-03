@@ -10,6 +10,21 @@ td:hover{
   background-color: gray;
 }
 
+td{
+  border: 1px solid #000
+}
+
+table{
+  border:1px solid #000;
+}
+
+h2,h3{
+  text-align: center;
+  font-size: 18pt;
+  font-family: Verdana, monospace;
+  font-weight: bold;
+}
+
 /* Grid for battleship */
 .square{
   width: 40px;
@@ -20,8 +35,18 @@ td:hover{
   font-family: Verdana, Monospace;
 }
 
-.battleship-grid{
+.comp{
+  float: left;
+  padding-left: 12%;
+}
 
+.user{
+  float: left;
+  padding-left: 40px;
+}
+
+.bordered {
+  border: 5px solid green;
 }
 
 #message{

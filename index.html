@@ -6,24 +6,47 @@
 <body>
   <h1> Battleship </h1>
 
-  <div id="message"> Computer board </div>
+  <div id="message"> Play Battlefield! Press start to play </div>
 
-  <table id="grid" class="battleship-grid" border="1" align="center">
-    <tr>
-				<td id="00" class="square"></td>
-        <td id="0A" class="square"></td>
-        <td id="0B" class="square"></td>
-        <td id="0C" class="square"></td>
-        <td id="0D" class="square"></td>
-        <td id="0E" class="square"></td>
-        <td id="0F" class="square"></td>
-        <td id="0G" class="square"></td>
-        <td id="0H" class="square"></td>
-        <td id="0I" class="square"></td>
-        <td id="0J" class="square"></td>
-    </tr>
+  <div class="comp">
+    <h2> Computer Board </h2>
+    <table class="comp-battleship-grid" align="center">
+      <tr>
+  				<td id="COMP-00" class="square"></td>
+          <td id="COMP-0A" class="square"></td>
+          <td id="COMP-0B" class="square"></td>
+          <td id="COMP-0C" class="square"></td>
+          <td id="COMP-0D" class="square"></td>
+          <td id="COMP-0E" class="square"></td>
+          <td id="COMP-0F" class="square"></td>
+          <td id="COMP-0G" class="square"></td>
+          <td id="COMP-0H" class="square"></td>
+          <td id="COMP-0I" class="square"></td>
+          <td id="COMP-0J" class="square"></td>
+      </tr>
+    </table>
+  </div>
 
-  </table>
-
+  <div class="user">
+    <h2> Your Board </h2>
+    <table class="user-battleship-grid" align='"center"'>
+        <tr>
+          <td id="PLAYER-00" class="square"></td>
+          <td id="PLAYER-0A" class="square"></td>
+          <td id="PLAYER-0B" class="square"></td>
+          <td id="PLAYER-0C" class="square"></td>
+          <td id="PLAYER-0D" class="square"></td>
+          <td id="PLAYER-0E" class="square"></td>
+          <td id="PLAYER-0F" class="square"></td>
+          <td id="PLAYER-0G" class="square"></td>
+          <td id="PLAYER-0H" class="square"></td>
+          <td id="PLAYER-0I" class="square"></td>
+          <td id="PLAYER-0J" class="square"></td>
+      </tr>
+    </table>
+  </div>
 
 </body>
+
+<button type="button" id="startBtn" onclick="startGame()">Start</button>
+<button type="button" id="resetBtn" onclick="clearBoard()">Reset</button>
